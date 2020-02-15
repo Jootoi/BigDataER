@@ -11,7 +11,7 @@ def testTokenBlocking(entityCollection1, entityCollection2, goldStandard):
     blockCollection = TokenBlocking(entityCollection1, entityCollection2, TitleTokenizer, TokenBlocker)
     stop = timeit.default_timer()
     EvaluateBlockCollection(entityCollection1, entityCollection2, blockCollection, goldStandard)
-    print("Time taken by blocking: {0} \n".format(stop-start))
+    print("Time taken by blocking: {0:.2f} \n".format(stop-start))
 
 def main():
     amazon = pd.read_csv("Amazon.csv", encoding = "ISO-8859-1").values

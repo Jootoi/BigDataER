@@ -98,6 +98,6 @@ def EvaluateBlockCollection(EntityCollection1, EntityCollection2, blockCollectio
     pc = len(matches)/len(gsIndexArray)*100
     rr1 = (1 - len(comparisons)/(len(EntityCollection1)*len(EntityCollection2)))*100
     rr2 = (1 - len(unique_comparisons)/(len(EntityCollection1)*len(EntityCollection2)))*100
-    print("Pair Completenes: {0}%, Reduction Ratio: {1}%, Reduction Ratio (with redundant pruned): {2}%".format(pc, rr1,rr2 ))
+    print("Pair Completenes: {0:.2f}%\n Reduction Ratio: {1:.2f}%\n Reduction Ratio (with redundant pruned): {2:.2f}%\n".format(pc, rr1,rr2 ))
 
 
