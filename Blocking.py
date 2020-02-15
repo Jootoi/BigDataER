@@ -9,7 +9,7 @@ stop = stopwords.words('english')
 lancaster = LancasterStemmer()
 
 
-def titleTokenizer(EC, title_index=1):
+def TitleTokenizer(EC, title_index=1):
     """Extract tokens from specified column of each entity
     Makes each token lower case, removes (english) stopwords and applies lancaster stemming"""
     titles = EC[:,title_index]
@@ -33,7 +33,7 @@ def TokenBlocker(tokenArray):
 
 
 
-def JoinBlocks(BC1, BC2):
+def _joinBlocks(BC1, BC2):
     """ Joins block collections made from two different entity collections.
     Returns dictionary where tokens are keys and values are tuples containing lists of index values of entites having that token.
     First list of the tuple is the indices coming from entity collection 1 and second list comes from entity collection 2.
@@ -53,7 +53,7 @@ def TokenBlocking(EntityCollection1, EntityCollection2, transformationFun, const
     blockedEC1 = constraintFun(transformedEC1)
     blockedEC2 = constraintFun(transformedEC2)
 
-    blockCollection = JoinBlocks(blockedEC1, blockedEC2)
+    blockCollection = _joinBlocks(blockedEC1, blockedEC2)
     return(blockCollection)
 
 
