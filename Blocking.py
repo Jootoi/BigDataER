@@ -8,10 +8,11 @@ from nltk.corpus import stopwords
 stop = stopwords.words('english')
 lancaster = LancasterStemmer()
 
-# Maybe define these dataset specific function in main instead or make them generic
-def AmazonGoogletitleTokenizer(EC):
-    #Title is always second column in these datasets
-    titles = EC[:,1]
+
+def titleTokenizer(EC, title_index=1):
+    """Extract tokens from specified column of each entity
+    Makes each token lower case, removes (english) stopwords and applies lancaster stemming"""
+    titles = EC[:,title_index]
     stemmed = []
     for title in titles:
         tokens = nltk.word_tokenize(title.lower())
@@ -21,6 +22,7 @@ def AmazonGoogletitleTokenizer(EC):
 
 
 def TokenBlocker(tokenArray):
+    """ Makes a dictionary where each token is key and value is array of index values of entites having that token """
     token_dictionary = {}
     for index, tokens in enumerate(tokenArray):
         for token in tokens:
@@ -32,13 +34,19 @@ def TokenBlocker(tokenArray):
 
 
 def JoinBlocks(BC1, BC2):
+    """ Joins block collections made from two different entity collections.
+    Returns dictionary where tokens are keys and values are tuples containing lists of index values of entites having that token.
+    First list of the tuple is the indices coming from entity collection 1 and second list comes from entity collection 2.
+    If some token is not found from both entity collections it is not added. """
     combined = {}
     for key in BC1:
         if(key in BC2):
             combined[key] = (BC1[key], BC2[key])
     return(combined)
 
-def TokenBlocking(EntityCollection1, EntityCollection2, transformationFun, constraintFun, matchFun):
+def TokenBlocking(EntityCollection1, EntityCollection2, transformationFun, constraintFun):
+    """Glues together the different functions required to do token blocking.
+    Input consists of two entity collections, a transformation function and a constrain function """
     transformedEC1 = transformationFun(EntityCollection1)
     transformedEC2 = transformationFun(EntityCollection2)
 
@@ -50,7 +58,8 @@ def TokenBlocking(EntityCollection1, EntityCollection2, transformationFun, const
 
 
 def _goldStandardToIndexArray(EntityCollection1, EntityCollection2, goldStandard):
-    #Extracts all the required comparisons from the goldStandard dataset as list of tuples
+    """Extracts all the required comparisons from the gold standard and maps them to indices in the original entity collections. 
+    Returns the comparisons as list of tuples. """
     s = goldStandard.shape
     N = s[0]
     goldStandardIndices = np.ndarray(shape=s, dtype=np.int32)
@@ -63,6 +72,8 @@ def _goldStandardToIndexArray(EntityCollection1, EntityCollection2, goldStandard
     return(list(map(tuple, goldStandardIndices)))
 
 def _reduceBlockToComparisons(block):
+    """Given a block as tuple of two arrays of indices, constructs all the pairwise comparisons.
+    Returns comparisons as list of tuples """
     comparisons = []
     part1 = block[0]
     part2 = block[1]
@@ -72,12 +83,14 @@ def _reduceBlockToComparisons(block):
     return(comparisons)
 
 def _reduceBlockCollectionToComparisons(bc):
+    """Given a block collection, finds all pairwise comparisons and returns them as list of tuples """
     comparisons = [_reduceBlockToComparisons(block) for key, block in bc.items()]
     comparisons =  [item for sublist in comparisons for item in sublist]
     return(comparisons)
 
 
 def EvaluateBlockCollection(EntityCollection1, EntityCollection2, blockCollection, goldStandard):
+    """Evaluate a block collection against gold standard. Calculates pair completenes, reduction ratio (vs. brute force)  and reduction ratio with redundancy pruning (vs. brute force)"""
     gsIndexArray = _goldStandardToIndexArray(EntityCollection1, EntityCollection2, goldStandard)
     comparisons = _reduceBlockCollectionToComparisons(blockCollection)
     unique_comparisons = set(comparisons)
