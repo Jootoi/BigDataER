@@ -9,14 +9,26 @@ stop = stopwords.words('english')
 lancaster = LancasterStemmer()
 
 
-def TitleTokenizer(EC, title_index=1):
+def ColumnTokenizer(EC, column_index=1):
     """Extract tokens from specified column of each entity
     Makes each token lower case, removes (english) stopwords and applies lancaster stemming"""
-    titles = EC[:,title_index]
+    titles = EC[:,column_index].astype(str)
     stemmed = []
     for title in titles:
         tokens = nltk.word_tokenize(title.lower())
-        filtered = [token for token in tokens if token not in stop and len(token)>1]
+        filtered = set([token for token in tokens if token not in stop and len(token)>1])
+        stemmed.append([lancaster.stem(token) for token in filtered])
+    return stemmed
+
+def MultiColumnTokenizer(EC, column_index = (1,2)):
+    """Extract tokens from specified columns of each entity
+    Makes each token lower case, removes (english) stopwords and applies lancaster stemming"""
+    titles = EC[:,column_index].astype(str)
+    stemmed = []
+    for title in titles:
+        title = "".join(title)
+        tokens = nltk.word_tokenize(title.lower())
+        filtered = set([token for token in tokens if token not in stop and len(token)>1])
         stemmed.append([lancaster.stem(token) for token in filtered])
     return stemmed
 
