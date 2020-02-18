@@ -3,30 +3,27 @@ import networkx as nx
 from Blocking import TokenBlocker
 
 def _tokenizeColumns(EC, transformationFun, column_index, token_name_prefix):
+    """ Extracts tokens from each of the specified columns to their own collection, so that attribute clustering can be applied later on.
+    Token name prefix is required to ensure the dictionary keys will be unique when tokens from multiple entity collections are combined."""
     tokens = {}
     for i in column_index:
         tokens[str(i)+token_name_prefix] = transformationFun(EC, i)
     return(tokens)
 
 def _flattenTokenDict(token_dict):
+    """ Takes token dictionary as parameter, the dictionary keys are unique identifiers for columns in the entity collection and values are tokens formed from that column"""
     flat_dict = {}
     for k in token_dict:
         flat_dict[k] = set([token for token_list in token_dict[k] for token in token_list])
     return(flat_dict)
 
 def JaccardSimilarity(set1, set2):
+    """ Caluclates Jaccard similarity between two sets"""
     return(len(set.intersection(set1, set2))/len(set.union(set1, set2)))
 
-def _createAdjacencyMatrix(link_dict):
-    n = len(link_dict)
-    a_mat = [[0 for i in range(0,n)] for j in range(0,n)]
-    ind = link_dict.keys()
-    for i,k in enumerate(link_dict):
-        row = a_mat[i]
-        row[ind.index(link_dict[k])] = 1
-    return(a_mat)
 
 def _linkAttributes(tokens1, tokens2, similarityFun):
+    """ From the two dictionaries of tokens, finds the attributes(columns) that are most similar between them, given a similarity function."""
     flat_dict_tokens1 = _flattenTokenDict(tokens1)
     flat_dict_tokens2 = _flattenTokenDict(tokens2)
     glue = []
@@ -63,6 +60,7 @@ def _linkAttributes(tokens1, tokens2, similarityFun):
     return(clusters)
 
 def mergeTokenLists(list1, list2):
+    """ Merges two list of lists of tokens, given that the outer lists have same length"""
 
     if(len(list1) != len(list2)):
         raise ValueError("List of tokens were not same size")
@@ -73,6 +71,7 @@ def mergeTokenLists(list1, list2):
     
 
 def ClusterBlocker(EC, clusters):
+    """ Creates blocks of entities given the attribute clusters and tokens"""
     clusterBlocks = {}
     for i, cluster in enumerate(clusters):
         concatenated = []
@@ -91,6 +90,7 @@ def ClusterBlocker(EC, clusters):
 
 
 def _joinClusterBlocks(BC1, BC2):
+    """ Merges the blockings coming from the two entity collections, respects the attribute clustering"""
     combined = {}
     for clusterKey in BC1:
         if(clusterKey in BC2):
@@ -102,6 +102,7 @@ def _joinClusterBlocks(BC1, BC2):
 
 
 def AttributeClusteringBlocking(EntityCollection1, EntityCollection2, transformationFun, similarityFun, column_index=(1,2,3)):
+    """ Glues together the different parts of Attribute cluster blocking to a single pipeline. Returns a complete block collection."""
     tokensEC1 = _tokenizeColumns(EntityCollection1, transformationFun, column_index, "_1")
     tokensEC2 = _tokenizeColumns(EntityCollection2, transformationFun, column_index, "_2")
     clusters = _linkAttributes(tokensEC1, tokensEC2, similarityFun)
