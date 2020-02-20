@@ -2,6 +2,7 @@ import networkx as nx
 import numpy as np
 from statistics import mean
 from math import ceil
+import heapq
 
 # entity1 is from first entity collection, entity2 is from the second.
 # Adds only non-duplicate nodes and edges, keep count of both to help with weighting.
@@ -72,15 +73,16 @@ def CardinalityNodePruning(nodesAndEdges):
         graph.add_edge(edge[0], edge[1], weight=edges[edge])
     for node in nodes:
         stack = []
+        heapq.heapify(stack)
         neighborhood = graph[node]
         k = ceil((len(neighborhood) * 0.1))
         for edge in neighborhood:
             nodeAndWeight = (edge, neighborhood[edge]['weight'])
             stack.append(nodeAndWeight)
-            stack.sort(key=lambda tup: tup[1], reverse=True)
-            if len(stack) > k:
-                stack.pop()
-        
+        stack.sort(key=lambda tup: tup[1], reverse=True)        
+        while(len(stack)>k):
+            stack.pop()
+
         for neighbor in stack:
             remainingEdges[(node, neighbor[0])] = 0
     return [*remainingEdges]
