@@ -20,13 +20,13 @@ def ColumnTokenizer(EC, column_index=1):
         stemmed.append([lancaster.stem(token) for token in filtered])
     return stemmed
 
-def MultiColumnTokenizer(EC, column_index = (1,2)):
+def MultiColumnTokenizer(EC, column_index = (1,2,3)):
     """Extract tokens from specified columns of each entity
     Makes each token lower case, removes (english) stopwords and applies lancaster stemming"""
     titles = EC[:,column_index].astype(str)
     stemmed = []
     for title in titles:
-        title = "".join(title)
+        title = " ".join(title)
         tokens = nltk.word_tokenize(title.lower())
         filtered = set([token for token in tokens if token not in stop and len(token)>1])
         stemmed.append([lancaster.stem(token) for token in filtered])
