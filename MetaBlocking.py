@@ -9,27 +9,39 @@ import heapq
 # Only pairs entities between collections, not within itself.
 # Returns dict-in-dict, where 'nodes' consist of entity represented by node (key) and its count (value),
 # and 'edges' consist of tuples (i, j) (key) and its count (value).
+# Adds EC1maxIndex + 1 to EC2 entities, because indices are not unique between ECs.
+
+maxIndex = 0
 def GraphBuilder(blockCollection):
     nodes = {}
     edges = {}
+    global maxIndex
     for block in blockCollection:
+        # entity1 is from first entity collection, entity2 is from the second
+        # Add only non-duplicates, keep count of the nodes and edges
+        # Only pairs entities between collections, not within itself
         for entity1 in blockCollection[block][0]:
             if entity1 not in nodes:
                 nodes[entity1] = 1
             else:
                 nodes[entity1] += 1
-            for entity2 in blockCollection[block][1]:
-                if (entity1, entity2) not in edges:
-                    edges[(entity1, entity2)] = 1
-                else:
-                    edges[(entity1, entity2)] += 1
-        
-        # Second loop so the count doesn't get messed up on EC2
+            if entity1 > maxIndex:
+                maxIndex = entity1
+                    
+    for block in blockCollection:  
         for entity2 in blockCollection[block][1]:
+            entity2 = entity2 + maxIndex + 1
             if entity2 not in nodes:
                 nodes[entity2] = 1
             else:
                 nodes[entity2] += 1
+            
+            for entity1 in blockCollection[block][0]:
+                if (entity1, entity2) not in edges:
+                    edges[(entity1, entity2)] = 1
+                else:
+                    edges[(entity1, entity2)] += 1
+    
     return {'nodes': nodes, 'edges': edges}
 
 # Adds Jaccard weight info. Edges are tuples (i, j), and work as dictionary keys, their
@@ -62,8 +74,8 @@ def WeightEdgePruning(nodesAndEdges):
             remainingEdges[edge] = edges[edge]
     return [*remainingEdges]
 
-# From each node's neighborhood, prunes the edges that are below the local top 10 % based on their weights.
-# Rounds up, so minimum is always 1. Edges are represented by tuples (i, j); returns the edges left in a list of tuples.
+# From each node's neighborhood, prunes the edges that are below the local top 10 % (k-value) based on their weights.
+# Rounds up, so minimum is always 1. Edges are represented by tuples (i, j); returns the remaining edges in a list of tuples.
 def CardinalityNodePruning(nodesAndEdges):
     nodes = nodesAndEdges['nodes']
     edges = nodesAndEdges['edges']
@@ -107,10 +119,12 @@ def _goldStandardToIndexArray(EntityCollection1, EntityCollection2, goldStandard
     goldStandardIndices = np.ndarray(shape=s, dtype=np.int32)
     pk1 = EntityCollection1[:, 0]
     pk2 = EntityCollection2[:, 0]
+    global maxIndex
     for i in np.arange(N):
         # Those are supposed to be primary keys so there should ever be only one match
+        # maxIndex + 1 to prevent indices clashing
         goldStandardIndices[i, 0] =  np.where(pk1 == goldStandard[i, 0])[0]
-        goldStandardIndices[i, 1] =  np.where(pk2 == goldStandard[i, 1])[0]
+        goldStandardIndices[i, 1] =  np.where(pk2 == goldStandard[i, 1])[0] + maxIndex + 1
     return(list(map(tuple, goldStandardIndices)))
 
 def EvaluateMetaBlockCollection(EntityCollection1, EntityCollection2, comparisons, goldStandard):
